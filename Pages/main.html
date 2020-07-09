@@ -1,0 +1,121 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>KMAA Scheduling</title>
+
+    <link rel="stylesheet" href="../CSS/main.css">
+
+</head>
+
+<body>
+
+    <script src="https://www.gstatic.com/firebasejs/7.15.5/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.15.5/firebase-database.js"></script>
+    <script src="../JS/firebase.js"></script>
+
+    <script>
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        function addToClass() {
+            var day = document.getElementById('addday').value;
+            var classID = document.getElementById('addclassID').value;
+            var name = document.getElementById('addname').value;
+            firebase.database().ref(day + "/" + classID).once('value').then(function(snapshot) {
+                firebase.database().ref(day + "/" + classID + "/students").limitToLast(100).on('value', function(students) {
+                    studentsList = snapshotToArray(students);
+                    if (snapshot.maxSize > studentsList.length) {
+                        if (confirm("Do you wish to add " + name + " to " + snapshot.val().className + " on " + day)) {
+                            firebase.database().ref(day + "/" + classID + "/students").push(name);
+                        }
+                    } else {
+                        if (confirm("This class is currently full would you like to add anyway?")) {
+                            if (confirm("Do you wish to add " + name + " to " + snapshot.val().className + " on " + day)) {
+                                firebase.database().ref(day + "/" + classID + "/students").push(name);
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        function removeFromClass() {
+
+        }
+
+        function snapshotToArray(snapshot) {
+            var returnArr = [];
+
+            snapshot.forEach(function(childSnapshot) {
+                var item = childSnapshot.val();
+                item.key = childSnapshot.key;
+
+                returnArr.push(item);
+            });
+
+            return returnArr;
+        };
+
+        function printAllStudents() {
+            var day = document.getElementById('getday').value;
+            var classID = document.getElementById('getclassID').value;
+            firebase.database().ref(day + "/" + classID + "/students").limitToLast(100).on('value', function(snapshot) {
+                var print = ""
+                snapshot.forEach(function(data) {
+                    print += data.val() + ", ";
+                })
+                print = print.substring(0, print.length - 2);
+                document.getElementById('return').innerHTML = print;
+            });
+
+        }
+
+    </script>
+
+    <header>
+        <p>KMAA Scheduling</p>
+    </header>
+
+    <div id="main">
+        <form>
+            <label>Name</label><br>
+            <input type="text" id="addname"><br>
+
+            <label>Day</label><br>
+            <input list="days" id="addday">
+            <datalist id="days">
+                <option value="Monday" />
+                <option value="Tuesday" />
+                <option value="Wednesday" />
+                <option value="Thursday" />
+                <option value="Friday" />
+                <option value="Saturday" />
+            </datalist><br>
+
+            <label>Class ID</label><br>
+            <input type="text" id="addclassID"><br>
+        </form>
+        <button onclick="addToClass()">Submit</button><br><br>
+        <label>Day</label><br>
+        <input list="days" id="getday">
+        <datalist id="days">
+            <option value="Monday" />
+            <option value="Tuesday" />
+            <option value="Wednesday" />
+            <option value="Thursday" />
+            <option value="Friday" />
+            <option value="Saturday" />
+        </datalist><br>
+
+        <label>Class ID</label><br>
+        <input type="text" id="getclassID"><br>
+        <button onclick="printAllStudents()">Print Students</button>
+        <p id="return"></p>
+    </div>
+</body>
+
+</html>
